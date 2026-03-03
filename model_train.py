@@ -13,18 +13,15 @@ import os
 
 warnings.filterwarnings('ignore')
 
-# 设备配置
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f"使用设备: {device}")
+print(f"Using device: {device}")
 
 
 def parse_inductor_data(txt_file_path):
-    """解析电感数据txt文件"""
-
+    """Parse inductor data from txt file"""
     with open(txt_file_path, 'r', encoding='utf-8') as file:
         content = file.read()
 
-    # 使用正则表达式提取结构参数
     pattern = r'turns_top=(\d+),\s*turns_bot=(\d+),\s*linewidth_top=([\d.]+),\s*linewidth_bot=([\d.]+),\s*center_gap=([\d.]+),\s*inner_diam=([\d.]+)'
 
     matches = re.findall(pattern, content)
@@ -41,21 +38,18 @@ def parse_inductor_data(txt_file_path):
         }
         structural_params.append(params)
 
-    print(f"成功解析 {len(structural_params)} 个电感结构")
+    print(f"Successfully parsed {len(structural_params)} inductor structures")
 
     return structural_params
 
 
 def load_sparams_results(csv_folder):
-    """加载S参数分析结果"""
-
-    # 假设你已经用之前的脚本生成了关键指标文件
+    """Load S-parameter analysis results"""
     csv_files = glob.glob(os.path.join(csv_folder, "*key_metrics*.csv"))
 
     if not csv_files:
-        raise FileNotFoundError("未找到S参数分析结果文件")
+        raise FileNotFoundError("No S-parameter result files found")
 
-    # 取最新的文件
     latest_file = max(csv_files, key=os.path.getctime)
     df = pd.read_csv(latest_file)
 
@@ -74,14 +68,13 @@ def load_sparams_results(csv_folder):
         }
         sparams_results.append(result)
 
-    print(f"成功加载 {len(sparams_results)} 个S参数结果")
+    print(f"Successfully loaded {len(sparams_results)} S-parameter results")
 
     return sparams_results
 
 
 class InductorDataset(Dataset):
-    """电感数据集"""
-
+    """Inductor dataset"""
     def __init__(self, features, targets):
         self.features = torch.FloatTensor(features)
         self.targets = torch.FloatTensor(targets)
@@ -94,8 +87,7 @@ class InductorDataset(Dataset):
 
 
 class PositionalEncoding(nn.Module):
-    """位置编码"""
-
+    """Positional encoding"""
     def __init__(self, d_model, max_len=5000):
         super(PositionalEncoding, self).__init__()
 
@@ -115,8 +107,7 @@ class PositionalEncoding(nn.Module):
 
 
 class EnhancedInductorTransformer(nn.Module):
-    """增强版电感Transformer模型"""
-
+    """Enhanced Transformer model for inductors"""
     def __init__(self, input_dim, output_dim, d_model=128, nhead=8,
                  num_layers=4, dim_feedforward=256, dropout=0.1):
         super(EnhancedInductorTransformer, self).__init__()
@@ -125,7 +116,6 @@ class EnhancedInductorTransformer(nn.Module):
         self.pos_encoder = PositionalEncoding(d_model)
         self.input_bn = nn.BatchNorm1d(input_dim)
 
-        # 增强的Transformer编码器
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model,
             nhead=nhead,
@@ -135,7 +125,6 @@ class EnhancedInductorTransformer(nn.Module):
         )
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
-        # 增强的输出层 - 添加更多正则化和残差连接
         self.output_layers = nn.Sequential(
             nn.Linear(d_model, 256),
             nn.BatchNorm1d(256),
@@ -170,19 +159,16 @@ class EnhancedInductorTransformer(nn.Module):
 
 
 def augment_data(features, targets, augmentation_factor=0.1):
-    """增强的数据增强 - 添加噪声和缩放"""
+    """Data augmentation by adding noise and scaling"""
     augmented_features = features.copy()
     augmented_targets = targets.copy()
 
-    # 对每个样本添加噪声
     noise_features = np.random.normal(0, augmentation_factor, features.shape)
     noise_targets = np.random.normal(0, augmentation_factor, targets.shape)
 
-    # 添加噪声后的数据
     augmented_features = np.vstack([augmented_features, features + noise_features])
     augmented_targets = np.vstack([augmented_targets, targets + noise_targets])
 
-    # 添加缩放变换
     scale_factors = np.random.uniform(0.95, 1.05, (features.shape[0], 1))
     scaled_features = features * scale_factors
     scaled_targets = targets * scale_factors
@@ -194,18 +180,14 @@ def augment_data(features, targets, augmentation_factor=0.1):
 
 
 def prepare_training_data(structural_params, sparams_results):
-    """准备训练数据"""
-
-    # 确保数据量一致
+    """Prepare training data"""
     min_len = min(len(structural_params), len(sparams_results))
     structural_params = structural_params[:min_len]
     sparams_results = sparams_results[:min_len]
 
-    print(f"使用 {min_len} 个样本进行训练")
+    print(f"Using {min_len} samples for training")
 
-    # 结构特征 - 删除 turns_bot 特征
     structural_features = []
-    # 更新特征名称列表，删除 turns_bot
     feature_names = [
         'turns_top', 'linewidth_top', 'linewidth_bot',
         'center_gap', 'inner_diam', 'total_turns', 'width_ratio', 'size_ratio'
@@ -214,18 +196,16 @@ def prepare_training_data(structural_params, sparams_results):
     for params in structural_params:
         features = [
             params['turns_top'],
-            # 删除 params['turns_bot']
             params['linewidth_top'],
             params['linewidth_bot'],
             params['center_gap'],
             params['inner_diam'],
-            params['turns_top'],  # 修改 total_turns 计算，因为去掉了 turns_bot
+            params['turns_top'],
             params['linewidth_top'] / max(params['linewidth_bot'], 1e-6),
             params['inner_diam'] / max(params['center_gap'], 1e-6),
         ]
         structural_features.append(features)
 
-    # 目标变量
     target_columns = [
         'Q_port1', 'Q_port2', 'coupling_coefficient',
         'bandwidth_13_Hz', 'bandwidth_23_Hz',
@@ -241,47 +221,40 @@ def prepare_training_data(structural_params, sparams_results):
     features_array = np.array(structural_features)
     targets_array = np.array(targets)
 
-    # 数据清洗：移除包含NaN的行
     valid_indices = ~np.any(np.isnan(targets_array), axis=1)
     features_array = features_array[valid_indices]
     targets_array = targets_array[valid_indices]
 
-    print(f"数据清洗后剩余 {len(features_array)} 个有效样本")
+    print(f"Remaining valid samples after cleaning: {len(features_array)}")
 
     return features_array, targets_array, feature_names, target_columns
 
 
 def train_inductor_transformer(txt_file_path, sparams_results_folder, epochs=800):
-    """带有改进早停机制的训练函数"""
-
-    # 1. 解析数据
-    print("步骤1: 解析电感结构数据...")
+    """Training function with improved early stopping"""
+    print("Step 1: Parsing inductor structure data...")
     structural_params = parse_inductor_data(txt_file_path)
 
-    print("步骤2: 加载S参数结果...")
+    print("Step 2: Loading S-parameter results...")
     sparams_results = load_sparams_results(sparams_results_folder)
 
-    # 2. 准备训练数据
-    print("步骤3: 准备训练数据...")
+    print("Step 3: Preparing training data...")
     features, targets, feature_names, target_names = prepare_training_data(
         structural_params, sparams_results
     )
 
-    print(f"特征维度: {features.shape}")
-    print(f"目标维度: {targets.shape}")
+    print(f"Feature shape: {features.shape}")
+    print(f"Target shape: {targets.shape}")
 
-    # 3. 数据预处理
     feature_scaler = StandardScaler()
     target_scaler = StandardScaler()
 
     features_scaled = feature_scaler.fit_transform(features)
     targets_scaled = target_scaler.fit_transform(targets)
 
-    # 4. 数据增强
-    print("步骤4: 数据增强...")
+    print("Step 4: Data augmentation...")
     features_scaled, targets_scaled = augment_data(features_scaled, targets_scaled, augmentation_factor=0.1)
 
-    # 5. 分割数据集
     X_train, X_test, y_train, y_test = train_test_split(
         features_scaled, targets_scaled, test_size=0.2, random_state=42
     )
@@ -290,11 +263,10 @@ def train_inductor_transformer(txt_file_path, sparams_results_folder, epochs=800
         X_train, y_train, test_size=0.1, random_state=42
     )
 
-    print(f"训练集: {X_train.shape[0]} 样本")
-    print(f"验证集: {X_val.shape[0]} 样本")
-    print(f"测试集: {X_test.shape[0]} 样本")
+    print(f"Training set: {X_train.shape[0]} samples")
+    print(f"Validation set: {X_val.shape[0]} samples")
+    print(f"Test set: {X_test.shape[0]} samples")
 
-    # 6. 创建数据加载器
     train_dataset = InductorDataset(X_train, y_train)
     val_dataset = InductorDataset(X_val, y_val)
     test_dataset = InductorDataset(X_test, y_test)
@@ -303,7 +275,6 @@ def train_inductor_transformer(txt_file_path, sparams_results_folder, epochs=800
     val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
-    # 7. 初始化模型
     input_dim = features.shape[1]
     output_dim = targets.shape[1]
 
@@ -317,25 +288,21 @@ def train_inductor_transformer(txt_file_path, sparams_results_folder, epochs=800
         dropout=0.1
     ).to(device)
 
-    # 8. 损失函数和优化器
     criterion = nn.MSELoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.001, weight_decay=1e-4)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=30, factor=0.7)
 
-    # 9. 训练循环
     train_losses = []
     val_losses = []
     best_val_loss = float('inf')
     best_model_state = None
 
-    # 改进的早停参数
-    patience = 150  # 增加早停耐心值
+    patience = 150
     early_stopping_counter = 0
 
-    print("开始训练增强版Transformer模型...")
+    print("Starting training of enhanced Transformer model...")
 
     for epoch in range(epochs):
-        # 训练阶段
         model.train()
         train_loss = 0.0
 
@@ -347,13 +314,11 @@ def train_inductor_transformer(txt_file_path, sparams_results_folder, epochs=800
             outputs = model(batch_features)
             loss = criterion(outputs, batch_targets)
             loss.backward()
-            # 降低梯度裁剪阈值
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=0.5)
             optimizer.step()
 
             train_loss += loss.item()
 
-        # 验证阶段
         model.eval()
         val_loss = 0.0
 
@@ -374,18 +339,15 @@ def train_inductor_transformer(txt_file_path, sparams_results_folder, epochs=800
 
         scheduler.step(val_loss)
 
-        # 早停机制
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             early_stopping_counter = 0
-            # 保存最佳模型状态
             best_model_state = model.state_dict()
         else:
             early_stopping_counter += 1
 
-        # 检查是否需要早停
         if early_stopping_counter >= patience:
-            print(f"早停触发，在第 {epoch + 1} 轮停止训练")
+            print(f"Early stopping triggered at epoch {epoch + 1}")
             break
 
         if (epoch + 1) % 50 == 0:
@@ -393,11 +355,9 @@ def train_inductor_transformer(txt_file_path, sparams_results_folder, epochs=800
             print(
                 f'Epoch [{epoch + 1}/{epochs}], Train Loss: {train_loss:.6f}, Val Loss: {val_loss:.6f}, LR: {current_lr:.6f}')
 
-    # 恢复最佳模型状态
     if best_model_state is not None:
         model.load_state_dict(best_model_state)
 
-    # 10. 最终测试
     model.eval()
     test_loss = 0.0
 
@@ -411,7 +371,7 @@ def train_inductor_transformer(txt_file_path, sparams_results_folder, epochs=800
             test_loss += loss.item()
 
     test_loss /= len(test_loader)
-    print(f'最终测试损失: {test_loss:.6f}')
+    print(f'Final test loss: {test_loss:.6f}')
     torch.save({
         'model_state_dict': model.state_dict(),
         'feature_scaler': feature_scaler,
@@ -421,7 +381,7 @@ def train_inductor_transformer(txt_file_path, sparams_results_folder, epochs=800
         'best_val_loss': best_val_loss,
         'epoch': epochs
     }, 'best_inductor_transformer.pth')
-    # 11. 绘制训练曲线
+
     plt.figure(figsize=(12, 8))
 
     plt.subplot(2, 2, 1)
@@ -434,7 +394,6 @@ def train_inductor_transformer(txt_file_path, sparams_results_folder, epochs=800
     plt.grid(True)
 
     plt.subplot(2, 2, 2)
-    # 特征重要性分析
     feature_importance = np.abs(model.input_projection.weight.data.cpu().numpy()).mean(axis=0)
     plt.barh(feature_names, feature_importance)
     plt.xlabel('Feature Importance')
@@ -448,39 +407,32 @@ def train_inductor_transformer(txt_file_path, sparams_results_folder, epochs=800
 
 
 def cross_validation_train(txt_file_path, sparams_results_folder, k_folds=5):
-    """K折交叉验证训练"""
-
-    # 解析数据
+    """K-fold cross validation training"""
     structural_params = parse_inductor_data(txt_file_path)
     sparams_results = load_sparams_results(sparams_results_folder)
     features, targets, feature_names, target_names = prepare_training_data(
         structural_params, sparams_results
     )
 
-    # 数据预处理
     feature_scaler = StandardScaler()
     target_scaler = StandardScaler()
     features_scaled = feature_scaler.fit_transform(features)
     targets_scaled = target_scaler.fit_transform(targets)
 
-    # K折交叉验证
     kfold = KFold(n_splits=k_folds, shuffle=True, random_state=42)
     fold_results = []
 
     for fold, (train_idx, val_idx) in enumerate(kfold.split(features_scaled)):
-        print(f"训练第 {fold + 1}/{k_folds} 折...")
+        print(f"Training fold {fold + 1}/{k_folds}...")
 
-        # 分割数据
         X_train_fold, X_val_fold = features_scaled[train_idx], features_scaled[val_idx]
         y_train_fold, y_val_fold = targets_scaled[train_idx], targets_scaled[val_idx]
 
-        # 创建数据加载器
         train_dataset = InductorDataset(X_train_fold, y_train_fold)
         val_dataset = InductorDataset(X_val_fold, y_val_fold)
         train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
-        # 初始化模型
         input_dim = features_scaled.shape[1]
         output_dim = targets_scaled.shape[1]
         model = EnhancedInductorTransformer(
@@ -493,18 +445,15 @@ def cross_validation_train(txt_file_path, sparams_results_folder, k_folds=5):
             dropout=0.1
         ).to(device)
 
-        # 训练配置
         criterion = nn.MSELoss()
         optimizer = torch.optim.AdamW(model.parameters(), lr=0.001, weight_decay=1e-4)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=30, factor=0.7)
 
-        # 训练
         best_val_loss = float('inf')
         patience = 100
         early_stopping_counter = 0
 
-        for epoch in range(300):  # 减少训练轮数
-            # 训练阶段
+        for epoch in range(300):
             model.train()
             train_loss = 0.0
 
@@ -521,7 +470,6 @@ def cross_validation_train(txt_file_path, sparams_results_folder, k_folds=5):
 
                 train_loss += loss.item()
 
-            # 验证阶段
             model.eval()
             val_loss = 0.0
 
@@ -539,7 +487,6 @@ def cross_validation_train(txt_file_path, sparams_results_folder, k_folds=5):
 
             scheduler.step(val_loss)
 
-            # 早停机制
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 early_stopping_counter = 0
@@ -550,17 +497,16 @@ def cross_validation_train(txt_file_path, sparams_results_folder, k_folds=5):
                 break
 
         fold_results.append(best_val_loss)
-        print(f"第 {fold + 1} 折验证损失: {best_val_loss:.6f}")
+        print(f"Fold {fold + 1} validation loss: {best_val_loss:.6f}")
 
-    print(f"{k_folds}折交叉验证平均验证损失: {np.mean(fold_results):.6f} ± {np.std(fold_results):.6f}")
+    print(f"{k_folds}-fold cross validation average loss: {np.mean(fold_results):.6f} ± {np.std(fold_results):.6f}")
     return fold_results
 
 
 class InductorPredictor:
-    """电感性能预测器"""
-
+    """Inductor performance predictor"""
     def __init__(self, model_path):
-        """加载训练好的模型"""
+        """Load trained model"""
         checkpoint = torch.load(model_path, map_location=device)
 
         self.feature_scaler = checkpoint['feature_scaler']
@@ -584,21 +530,19 @@ class InductorPredictor:
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.model.eval()
 
-        print(f"模型加载成功! 验证损失: {checkpoint.get('best_val_loss', 'N/A')}")
+        print(f"Model loaded successfully! Validation loss: {checkpoint.get('best_val_loss', 'N/A')}")
 
     def predict(self, structural_params):
-        """预测电感性能"""
-
+        """Predict inductor performance"""
         features = []
         for params in structural_params:
             feature_vec = [
                 params['turns_top'],
-                # 删除 params['turns_bot']
                 params['linewidth_top'],
                 params['linewidth_bot'],
                 params['center_gap'],
                 params['inner_diam'],
-                params['turns_top'],  # 修改 total_turns 计算
+                params['turns_top'],
                 params['linewidth_top'] / max(params['linewidth_bot'], 1e-6),
                 params['inner_diam'] / max(params['center_gap'], 1e-6),
             ]
@@ -613,7 +557,6 @@ class InductorPredictor:
 
         predictions = self.target_scaler.inverse_transform(predictions_scaled)
 
-        # 转换为字典格式
         results = []
         for pred in predictions:
             result_dict = {}
@@ -624,26 +567,21 @@ class InductorPredictor:
         return results
 
 
-# 使用示例
 if __name__ == "__main__":
-    # 配置路径
-    txt_file_path = "merged_data.txt"  # 你的电感结构数据文件
-    sparams_results_folder = "key_metrics_results"  # S参数分析结果文件夹
+    txt_file_path = "merged_data.txt"
+    sparams_results_folder = "key_metrics_results"
 
-    # 可以选择使用普通训练或交叉验证训练
-    print("开始训练增强版电感Transformer模型...")
+    print("Starting training of enhanced inductor Transformer model...")
     model, feature_scaler, target_scaler, feature_names, target_names = train_inductor_transformer(
         txt_file_path, sparams_results_folder, epochs=1200
     )
 
-    print("\n训练完成!")
-    print(f"特征: {feature_names}")
-    print(f"目标: {target_names}")
+    print("\nTraining completed!")
+    print(f"Features: {feature_names}")
+    print(f"Targets: {target_names}")
 
-    # 使用训练好的模型进行预测
     predictor = InductorPredictor('best_inductor_transformer.pth')
 
-    # 预测新设计
     new_designs = [
         {
             'turns_top': 2, 'turns_bot': 1,
@@ -659,9 +597,9 @@ if __name__ == "__main__":
 
     predictions = predictor.predict(new_designs)
 
-    print("\n预测结果:")
+    print("\nPrediction results:")
     for i, pred in enumerate(predictions):
-        print(f"\n设计 {i + 1}:")
+        print(f"\nDesign {i + 1}:")
         for key, value in pred.items():
             if 'bandwidth' in key:
                 print(f"  {key}: {value / 1e9:.2f} GHz")
