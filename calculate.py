@@ -358,3 +358,4 @@ if __name__ == "__main__":
 
     if results is not None:
         print(f"\nAnalysis completed! Processed {len(results)} files")
+
