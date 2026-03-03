@@ -5,8 +5,8 @@ import math
 
 
 bounds = np.array([
-    [1, 4],        # Nt
-    [1, 4],        # Nb
+    [1, 5],        # Nt
+    [1, 5],        # Nb
     [3.0, 10.0],   # Wt
     [3.0, 10.0],   # Wb
     [40, 120],     # Gc
@@ -233,8 +233,6 @@ def run_nsga2(model):
                     new_pop.append(pop[idx])
 
         pop = np.array(new_pop)
-
-        # 生成子代
         offspring = []
         while len(offspring) < POP_SIZE:
             p1, p2 = random.sample(list(pop), 2)
