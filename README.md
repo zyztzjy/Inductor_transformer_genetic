@@ -6,7 +6,7 @@ This repository provides an end‑to‑end framework for on‑chip spiral induct
 2. Simulation & dataset creation – Obtain S‑parameters via EM simulation (user‑performed).
 3. Transformer surrogate modeling – Train a deep learning model that maps geometric parameters directly to full‑band S‑parameters.
 4. Robustness analysis – Evaluate model stability under input perturbations.
-5. Multi‑objective optimization – Use the trained Transformer as a fast evaluator inside an NSGA‑II genetic algorithm to optimize bandwidth, Q factor, and insertion loss.
+5. Multi‑objective optimization – Use the trained Transformer as a fast evaluator inside algorithm to optimize bandwidth, Q factor, and insertion loss.
 
 ---
 
@@ -105,7 +105,7 @@ Output:
 - noise_robustness_transformer.png : Plot showing performance degradation under increasing noise.
 
 
-Step 5: Multi‑Objective Optimization (NSGA‑II)
+Step 5: Multi‑Objective Optimization
 ----------------------------------------------
 Run optimizer_with_Trans.py to perform optimization.
 
@@ -117,7 +117,6 @@ This script:
   - Maximize Bandwidth (GHz)
   - Maximize Q Factor
   - Minimize Insertion Loss (dB)
-- Employs NSGA‑II with adaptive crossover/mutation rates.
 - Population size: 100, Generations: 200.
 
 Outputs:
