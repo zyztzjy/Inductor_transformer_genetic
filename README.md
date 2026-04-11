@@ -70,12 +70,11 @@ After simulation, export the data into the following structure:
    - turns_top=2, turns_bot=1, linewidth_top=5.2, linewidth_bot=5.8, center_gap=68, inner_diam=39
    - N_t=2, N_b=1, W_t=5.2, W_b=5.8, G_c=68, D_i=39
    - 2, 1, 5.2, 5.8, 68, 39
+   - 
+2. s_parameters.npz – NumPy archive
+ https://pan.baidu.com/s/16bQFLr7LbXajGpKOWINTZQ code: e8s2
 
-2. s_parameters.npz – NumPy archive with the following keys:
-   - freq           : 1D array of frequency points (GHz).
-   - S11_mag        : 2D array of shape (n_samples, n_freq).
-   - S11_phase      : 2D array of shape (n_samples, n_freq).
-   - S12_mag, S12_phase, ..., S33_mag, S33_phase
+
 
 
 Step 3: Train the Transformer Surrogate Model
