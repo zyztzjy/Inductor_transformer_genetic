@@ -4,7 +4,7 @@ This repository provides an end‑to‑end framework for on‑chip spiral induct
 
 1. Layout generation – Create inductor geometries in Keysight ADS.
 2. Simulation & dataset creation – Obtain S‑parameters via EM simulation (user‑performed).
-3. Transformer surrogate modeling – Train a deep learning model that maps geometric parameters directly to full‑band S‑parameters.
+3. Transformer surrogate modeling – Train a deep learning model that maps geometric parameters to S‑parameters.
 4. Robustness analysis – Evaluate model stability under input perturbations.
 5. Multi‑objective optimization – Use the trained Transformer as a fast evaluator inside algorithm to optimize bandwidth, Q factor, and insertion loss.
 
