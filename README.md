@@ -78,10 +78,6 @@ After simulation, export the data into the following structure:
    - S11_phase      : 2D array of shape (n_samples, n_freq).
    - S12_mag, S12_phase, ..., S33_mag, S33_phase
 
-Place both files inside a folder named:
-
-    inductor_s_params_dataset/
-
 
 Step 3: Train the Transformer Surrogate Model
 ---------------------------------------------
@@ -89,18 +85,9 @@ Run datatrain_transformer.py to train the model.
 
     python datatrain_transformer.py
 
-This script performs:
-- Parsing geometric parameters and S‑parameters.
-- Outlier removal (3‑sigma criterion).
-- Feature and target normalization (StandardScaler).
-- Data augmentation (Gaussian noise, random scaling, MixUp).
-- 5‑fold cross‑validation.
-- Final training on the full augmented dataset.
-
 Outputs:
 - best_inductor_transformer.pth : Trained model state, feature/target scalers, and metadata.
 - training_results.png : Training/validation loss curves, per‑dimension R² scores, and true‑vs‑predicted scatter plot.
-
 
 Step 4: Evaluate Model Robustness
 ---------------------------------
@@ -134,33 +121,10 @@ This script:
 - Employs NSGA‑II with adaptive crossover/mutation rates.
 - Population size: 100, Generations: 200.
 
-Parameter Bounds:
-| Variable         | Min        | Max        |
-|------------------|------------|------------|
-| turns_top        | 1          | 5          |
-| turns_bot        | 1          | 5          |
-| linewidth_top    | 3e‑6 (µm)  | 10e‑6 (µm) |
-| linewidth_bot    | 3e‑6 (µm)  | 10e‑6 (µm) |
-| center_gap       | 40e‑6 (µm) | 120e‑6 (µm)|
-| inner_diam       | 20e‑6 (µm) | 100e‑6 (µm)|
-
 Outputs:
 - convergence_history.csv : Per‑generation best and average fitness values.
 - pareto_optimal_solutions.csv : Table of Pareto‑optimal designs with their performance metrics.
 - convergence_curves.png : Evolution plots for bandwidth, Q factor, insertion loss, and the final Pareto front.
-
-
-Key Outputs Summary
--------------------
-| File                               | Description                                                       |
-|------------------------------------|-------------------------------------------------------------------|
-| best_inductor_transformer.pth      | Trained Transformer model, feature/target scalers, and metadata.  |
-| training_results.png               | Training/validation loss, per‑dimension R², prediction scatter.   |
-| noise_robustness_transformer.png   | R² degradation as a function of input noise level.                 |
-| convergence_history.csv            | Fitness statistics per generation.                                 |
-| pareto_optimal_solutions.csv       | Optimized geometric parameters and predicted performance.          |
-| convergence_curves.png             | Convergence curves and Pareto front visualization.                 |
-
 
 Dependencies
 ------------
