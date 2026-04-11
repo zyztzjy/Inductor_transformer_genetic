@@ -1,4 +1,3 @@
-# Inductor_transformer_genetic
 # Inductor Design and Optimization with Transformer Surrogate Model
 
 This repository provides an end‑to‑end framework for on‑chip spiral inductor design and optimization. The workflow consists of:
