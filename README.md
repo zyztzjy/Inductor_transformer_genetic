@@ -119,7 +119,6 @@ This script:
 - Population size: 100, Generations: 200.
 
 Outputs:
-- convergence_history.csv : Per‑generation best and average fitness values.
 - pareto_optimal_solutions.csv : Table of Pareto‑optimal designs with their performance metrics.
 - convergence_curves.png : Evolution plots for bandwidth, Q factor, insertion loss, and the final Pareto front.
 
@@ -143,7 +142,6 @@ Install Python packages:
 Notes
 -----
 - The Transformer model expects input features in the order: [N_t, N_b, W_t, W_b, G_c, D_i] (all in µm except turns).
-- The number of frequency points is inferred from the dataset; ensure consistency between training and inference.
 - For the optimizer, parameter bounds and objectives can be customized in optimizer_with_Trans.py (BOUNDS, POP_SIZE, NGEN, etc.).
 
 
